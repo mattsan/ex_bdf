@@ -1,4 +1,4 @@
-defmodule ExBdfParser.MixProject do
+defmodule ExBDFParser.MixProject do
   use Mix.Project
 
   def project do
