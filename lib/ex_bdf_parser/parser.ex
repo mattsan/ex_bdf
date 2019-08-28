@@ -53,8 +53,9 @@ defmodule ExBDFParser.Parser do
     with :ok <- read_startchar(io),
          {:ok, code} <- read_encoding(io),
          {:ok, width} <- read_dwidth(io),
+         {:ok, bbx} <- read_bbx(io),
          {:ok, bitmap} <- read_bitmap(io),
-         do: %FontImage{code: code, width: width, height: Enum.count(bitmap), bitmap: bitmap}
+         do: %FontImage{code: code, width: width, height: Enum.count(bitmap), bbx: bbx, bitmap: bitmap}
   end
 
   defp read_startchar(io) do
@@ -84,6 +85,23 @@ defmodule ExBDFParser.Parser do
 
       line when is_binary(line) ->
         read_dwidth(io)
+
+      error ->
+        error
+    end
+  end
+
+  defp read_bbx(io) do
+    case IO.read(io, :line) do
+      <<"BBX ", bounding::binary>> ->
+        [width, height, offset_x, offset_y] =
+          Regex.run(~r"([\d-]+)\s+([\d-]+)\s+([\d-]+)\s+([\d-]+)", bounding)
+          |> Enum.drop(1)
+          |> Enum.map(&String.to_integer/1)
+        {:ok, %{width: width, height: height, offset_x: offset_x, offset_y: offset_y}}
+
+      line when is_binary(line) ->
+        read_bbx(io)
 
       error ->
         error
