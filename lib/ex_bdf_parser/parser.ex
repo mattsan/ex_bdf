@@ -1,14 +1,17 @@
 defmodule ExBDFParser.Parser do
   alias ExBDFParser.{FontImage, Jis2Unicode}
 
-  def parse(io, conversion \\ nil) do
+  def parse(io, opts \\ []) when is_list(opts) do
+    conversion = Keyword.get(opts, :conversion)
+    target = Keyword.get(opts, :into, %{})
+
     with :ok <- read_header(io),
          {:ok, font_stream} <- read_all_fonts(io),
-         fonts <- stream_to_fonts(font_stream, conversion),
+         fonts <- stream_to_fonts(font_stream, conversion, target),
          do: fonts
   end
 
-  def stream_to_fonts(stream, conversion) do
+  def stream_to_fonts(stream, conversion, target) when is_map(target) do
     conv =
       case conversion do
         :jis2unicode ->
@@ -22,7 +25,7 @@ defmodule ExBDFParser.Parser do
           end
       end
 
-    Enum.into(stream, %{}, conv)
+    Enum.into(stream, target, conv)
   end
 
   def read_header(io) do
