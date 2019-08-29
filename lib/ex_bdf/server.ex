@@ -1,7 +1,7 @@
-defmodule ExBDFParser.Server do
+defmodule ExBDF.Server do
   use GenServer
 
-  @name ExBDFParser
+  @name ExBDF
 
   def start_link(opts) do
     font_files = Keyword.get(opts, :fonts, [])
@@ -30,7 +30,7 @@ defmodule ExBDFParser.Server do
     fonts =
       state.font_files
       |> Enum.reduce(%{}, fn filename, fonts ->
-        {:ok, new_fonts} = ExBDFParser.load(filename, conversion: state.conversion, into: fonts)
+        {:ok, new_fonts} = ExBDF.load(filename, conversion: state.conversion, into: fonts)
         new_fonts
       end)
 

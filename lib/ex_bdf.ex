@@ -1,9 +1,9 @@
-defmodule ExBDFParser do
+defmodule ExBDF do
   @moduledoc """
-  Documentation for ExBDFParser.
+  Documentation for ExBDF.
   """
 
-  alias ExBDFParser.{Parser, FontImage}
+  alias ExBDF.{Parser, FontImage}
 
   def load(filename, opts \\ []) when is_list(opts) do
     File.open(filename, &Parser.parse(&1, opts))

@@ -1,4 +1,4 @@
-defmodule ExBDFParser.Jis2Unicode do
+defmodule ExBDF.Jis2Unicode do
 
   import String, only: [to_integer: 2]
 
