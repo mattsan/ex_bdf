@@ -3,7 +3,7 @@ defmodule ExBDF do
   Documentation for ExBDF.
   """
 
-  alias ExBDF.{Parser, FontImage}
+  alias ExBDF.{Parser, Font}
 
   def load(filename, opts \\ []) when is_list(opts) do
     File.open(filename, &Parser.parse(&1, opts))
@@ -19,7 +19,7 @@ defmodule ExBDF do
     end
   end
 
-  def show_bitmap_image(%FontImage{} = font) do
+  def show_bitmap_image(%Font{} = font) do
     font
     |> IO.inspect()
 

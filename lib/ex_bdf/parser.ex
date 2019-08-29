@@ -1,5 +1,5 @@
 defmodule ExBDF.Parser do
-  alias ExBDF.{FontImage, Jis2Unicode}
+  alias ExBDF.{Font, Jis2Unicode}
 
   def parse(io, opts \\ []) when is_list(opts) do
     conversion = Keyword.get(opts, :conversion)
@@ -15,12 +15,12 @@ defmodule ExBDF.Parser do
     conv =
       case conversion do
         :jis2unicode ->
-          fn %FontImage{code: code} = font ->
+          fn %Font{code: code} = font ->
             {Jis2Unicode.convert(code), font}
           end
 
         _ ->
-          fn %FontImage{code: code} = font ->
+          fn %Font{code: code} = font ->
             {code, font}
           end
       end
@@ -40,7 +40,7 @@ defmodule ExBDF.Parser do
     font_stream =
       Stream.repeatedly(fn ->
         case read_font(io) do
-          %FontImage{} = font -> font
+          %Font{} = font -> font
           _ -> nil
         end
       end)
@@ -55,7 +55,7 @@ defmodule ExBDF.Parser do
          {:ok, width} <- read_dwidth(io),
          {:ok, bbx} <- read_bbx(io),
          {:ok, bitmap} <- read_bitmap(io),
-         do: %FontImage{code: code, width: width, height: Enum.count(bitmap), bbx: bbx, bitmap: bitmap}
+         do: %Font{code: code, width: width, height: Enum.count(bitmap), bbx: bbx, bitmap: bitmap}
   end
 
   defp read_startchar(io) do
