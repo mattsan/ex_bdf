@@ -27,7 +27,8 @@ defmodule ExBDF do
     |> Enum.each(fn bitmap ->
       bitmap
       |> Integer.to_string(2)
-      |> String.pad_leading(ceil(font.width / 8) * 8, "0")
+      |> String.pad_leading(ceil(font.bbx.width / 8) * 8, "0")
+      |> String.pad_trailing(ceil(font.width / 8) * 8, "0")
       |> String.slice(0, font.width)
       |> String.replace("0", " .")
       |> String.replace("1", "[]")
