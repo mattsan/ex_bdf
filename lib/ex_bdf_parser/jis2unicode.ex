@@ -23,6 +23,7 @@ defmodule ExBDFParser.Jis2Unicode do
       |> Stream.filter(&(&1 != nil))
       |> Stream.take_while(&(&1 != :eof))
       |> Enum.into(%{})
+      |> Map.merge(for c <- (0x20..0xfe), into: %{}, do: {c, c})
     end)
 
   def convert(jis) do
