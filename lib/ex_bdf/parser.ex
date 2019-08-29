@@ -1,5 +1,6 @@
 defmodule ExBDF.Parser do
   alias ExBDF.{Font, Jis2Unicode}
+  alias ExBDF.Font.BBX
 
   def parse(io, opts \\ []) when is_list(opts) do
     conversion = Keyword.get(opts, :conversion)
@@ -98,7 +99,7 @@ defmodule ExBDF.Parser do
           Regex.run(~r"([\d-]+)\s+([\d-]+)\s+([\d-]+)\s+([\d-]+)", bounding)
           |> Enum.drop(1)
           |> Enum.map(&String.to_integer/1)
-        {:ok, %{width: width, height: height, offset_x: offset_x, offset_y: offset_y}}
+        {:ok, %BBX{width: width, height: height, offset_x: offset_x, offset_y: offset_y}}
 
       line when is_binary(line) ->
         read_bbx(io)
