@@ -21,7 +21,7 @@ defmodule ExBDF.Server do
   end
 
   def init(state) do
-    GenServer.cast(@name, :load_fonts)
+    GenServer.cast(self(), :load_fonts)
 
     {:ok, state}
   end
