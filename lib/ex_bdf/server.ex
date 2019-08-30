@@ -30,7 +30,7 @@ defmodule ExBDF.Server do
     fonts =
       state.font_files
       |> Enum.reduce(%{}, fn filename, fonts ->
-        {:ok, new_fonts} = ExBDF.load(filename, conversion: state.conversion, into: fonts)
+        {:ok, new_fonts} = ExBDF.Font.load(filename, conversion: state.conversion, into: fonts)
         new_fonts
       end)
 
