@@ -5,7 +5,7 @@ defmodule ExBDF.Server do
 
   def start_link(opts) do
     font_files = Keyword.get(opts, :fonts, [])
-    conversion = Keyword.get(opts, :conversion, :jis2unicode)
+    conversion = Keyword.get(opts, :conversion)
     name = Keyword.get(opts, :name, @name)
 
     state = %{
