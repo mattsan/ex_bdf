@@ -18,7 +18,9 @@ defmodule ExBDF.Font do
     bitmap =
       bdf_bitmap
       |> Enum.map(fn bdf_row ->
-        <<row::size(width), _::bitstring>> = <<0::size(bbx_offset_x), bdf_row::size(bbx_width), 0>>
+        <<row::size(width), _::bitstring>> =
+          <<0::size(bbx_offset_x), bdf_row::size(bbx_width), 0>>
+
         row
       end)
 
@@ -31,12 +33,13 @@ defmodule ExBDF.Font do
     File.open(filename, &Parser.parse(&1, opts))
   end
 
-  def bitmap(%Font{} = font, foreground \\ <<1::1>>, background \\ <<0::1>>) when is_binary(foreground) and is_binary(background) do
+  def bitmap(%Font{} = font, foreground \\ <<1::1>>, background \\ <<0::1>>)
+      when is_binary(foreground) and is_binary(background) do
     width = font.width
 
     font.bitmap
     |> Enum.map(fn bits ->
-      for <<bit::1 <- <<bits::size(width)>> >>, into: "" do
+      for <<(bit::1 <- <<bits::size(width)>>)>>, into: "" do
         case bit do
           0 -> background
           1 -> foreground
@@ -45,7 +48,8 @@ defmodule ExBDF.Font do
     end)
   end
 
-  def string_to_bitmap(str, foreground \\ <<1::1>>, background \\ <<0::1>>) when is_binary(str) and is_binary(foreground) and is_binary(background) do
+  def string_to_bitmap(str, foreground \\ <<1::1>>, background \\ <<0::1>>)
+      when is_binary(str) and is_binary(foreground) and is_binary(background) do
     fonts =
       str
       |> String.to_charlist()
@@ -67,7 +71,7 @@ defmodule ExBDF.Font do
       padding_bottom = font.bbx.offset_y - bottom
       padding_top = top - (font.bbx.height + font.bbx.offset_y - 1)
 
-      List.duplicate(0, padding_top) ++ font.bitmap ++ List.duplicate(0, padding_bottom)
+      (List.duplicate(0, padding_top) ++ font.bitmap ++ List.duplicate(0, padding_bottom))
       |> Enum.map(&<<&1::size(width)>>)
     end)
     |> Enum.zip()
@@ -77,7 +81,7 @@ defmodule ExBDF.Font do
         |> Tuple.to_list()
         |> Enum.into("")
 
-      for <<bit::1 <- line >>, into: "" do
+      for <<bit::1 <- line>>, into: "" do
         case bit do
           1 -> foreground
           0 -> background

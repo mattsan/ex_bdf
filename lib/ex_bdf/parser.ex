@@ -99,6 +99,7 @@ defmodule ExBDF.Parser do
           Regex.run(~r"([\d-]+)\s+([\d-]+)\s+([\d-]+)\s+([\d-]+)", bounding)
           |> Enum.drop(1)
           |> Enum.map(&String.to_integer/1)
+
         {:ok, %BBX{width: width, height: height, offset_x: offset_x, offset_y: offset_y}}
 
       line when is_binary(line) ->
