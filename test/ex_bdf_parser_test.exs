@@ -1,4 +1,4 @@
-defmodule ExBdfParserTest do
+defmodule ExBDFTest do
   use ExUnit.Case
-  doctest ExBdfParser
+  doctest ExBDF
 end
