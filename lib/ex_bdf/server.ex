@@ -20,6 +20,10 @@ defmodule ExBDF.Server do
     GenServer.call(name, {:get_font, code})
   end
 
+  def load_fonts(name \\ @name, font_files, opts) when is_list(font_files) and is_list(opts) do
+    GenServer.cast(name, {:load_fonts, font_files, opts})
+  end
+
   def init(state) do
     GenServer.cast(self(), :load_fonts)
 
@@ -35,6 +39,13 @@ defmodule ExBDF.Server do
       end)
 
     {:noreply, Map.put(state, :fonts, fonts)}
+  end
+
+  def handle_cast({:load_fonts, font_files, opts}, state) do
+    conversion = Keyword.get(opts, :conversion)
+    GenServer.cast(self(), :load_fonts)
+
+    {:noreply, %{state | font_files: font_files, conversion: conversion}}
   end
 
   def handle_call({:get_font, code}, _from, state) do
