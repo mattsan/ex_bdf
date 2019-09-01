@@ -56,7 +56,7 @@ defmodule ExBDF.Parser do
          {:ok, width} <- read_dwidth(io),
          {:ok, bbx} <- read_bbx(io),
          {:ok, bitmap} <- read_bitmap(io),
-         do: %Font{code: code, width: width, height: Enum.count(bitmap), bbx: bbx, bitmap: bitmap}
+         do: Font.new(code, width, bbx, bitmap)
   end
 
   defp read_startchar(io) do
