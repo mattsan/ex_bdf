@@ -30,15 +30,23 @@ defmodule ExBDF.Server do
     {:ok, state}
   end
 
-  def handle_cast(:load_fonts, state) do
+  def handle_cast(:load_fonts, %{font_files: font_files, conversion: conversion} = state) when is_list(font_files) do
     fonts =
-      state.font_files
+      font_files
       |> Enum.reduce(%{}, fn filename, fonts ->
-        {:ok, new_fonts} = ExBDF.Font.load(filename, conversion: state.conversion, into: fonts)
+        {:ok, new_fonts} = ExBDF.Font.load(filename, conversion: conversion, into: fonts)
         new_fonts
       end)
 
     {:noreply, Map.put(state, :fonts, fonts)}
+  end
+
+  def handle_cast(:load_fonts, %{font_files: font_module} = state) when is_atom(font_module) do
+    fonts = apply(font_module, :fonts, [])
+    font_files = apply(font_module, :font_files, [])
+    conversion = apply(font_module, :conversion, [])
+
+    {:noreply, Map.merge(state, %{fonts: fonts, font_files: font_files, conversion: conversion, font_module: font_module})}
   end
 
   def handle_cast({:load_fonts, font_files, opts}, state) do

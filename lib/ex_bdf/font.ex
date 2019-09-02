@@ -97,4 +97,19 @@ defmodule ExBDF.Font do
     bitmap(font, "[]", " .")
     |> Enum.each(&IO.puts/1)
   end
+
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @font_files Keyword.get(opts, :fonts, [])
+      @conversion Keyword.get(opts, :conversion)
+      @fonts Enum.reduce(@font_files, %{}, fn font_file, fonts ->
+        {:ok, new_fonts} = ExBDF.Font.load(font_file, conversion: @conversion, into: fonts)
+        new_fonts
+      end)
+
+      def font_files, do: @font_files
+      def conversion, do: @conversion
+      def fonts, do: @fonts
+    end
+  end
 end
