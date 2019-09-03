@@ -1,4 +1,4 @@
-defmodule ExBDF.Jis2Unicode do
+defmodule ExBDF.Parser.Jis2Unicode do
   import String, only: [to_integer: 2]
 
   # see http://x0213.org/codetable/jisx0213-2004-8bit-std.txt

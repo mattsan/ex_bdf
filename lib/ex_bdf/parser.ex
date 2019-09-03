@@ -1,6 +1,7 @@
 defmodule ExBDF.Parser do
-  alias ExBDF.{Font, Jis2Unicode}
+  alias ExBDF.Font
   alias ExBDF.Font.BBX
+  alias ExBDF.Parser.Jis2Unicode
 
   def parse(io, opts \\ []) when is_list(opts) do
     conversion = Keyword.get(opts, :conversion)
