@@ -3,6 +3,25 @@ defmodule ExBDF.Parser do
   alias ExBDF.Font.BBX
   alias ExBDF.Parser.Jis2Unicode
 
+  def load(filename, opts \\ []) when is_binary(filename) and is_list(opts) do
+    File.open(filename, &parse(&1, opts))
+  end
+
+  def load!(filename, opts \\ [])
+
+  def load!(filename, opts) when is_binary(filename) and is_list(opts) do
+    {:ok, fonts} = File.open(filename, &parse(&1, opts))
+    fonts
+  end
+
+  def load!(filenames, opts) when is_list(filenames) and is_list(opts) do
+    fonts = Keyword.get(opts, :into, %{})
+    filenames
+    |> Enum.reduce(fonts, fn filename, fonts ->
+      load!(filename, [{:into, fonts} | opts])
+    end)
+  end
+
   def parse(io, opts \\ []) when is_list(opts) do
     conversion = Keyword.get(opts, :conversion)
     target = Keyword.get(opts, :into, %{})

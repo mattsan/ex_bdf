@@ -1,6 +1,8 @@
 defmodule ExBDF.Server do
   use GenServer
 
+  alias ExBDF.Parser
+
   @name ExBDF
 
   def start_link(opts) do
@@ -31,12 +33,7 @@ defmodule ExBDF.Server do
   end
 
   def handle_cast(:load_fonts, %{font_files: font_files, conversion: conversion} = state) when is_list(font_files) do
-    fonts =
-      font_files
-      |> Enum.reduce(%{}, fn filename, fonts ->
-        {:ok, new_fonts} = ExBDF.Font.load(filename, conversion: conversion, into: fonts)
-        new_fonts
-      end)
+    fonts = Parser.load!(font_files, conversion: conversion)
 
     {:noreply, Map.put(state, :fonts, fonts)}
   end

@@ -29,10 +29,6 @@ defmodule ExBDF.Font do
     %Font{code: code, width: width, height: height, bbx: bbx, bitmap: bitmap}
   end
 
-  def load(filename, opts \\ []) when is_list(opts) do
-    File.open(filename, &Parser.parse(&1, opts))
-  end
-
   def bitmap(%Font{} = font, foreground \\ <<1::1>>, background \\ <<0::1>>)
       when is_binary(foreground) and is_binary(background) do
     width = font.width
@@ -102,10 +98,7 @@ defmodule ExBDF.Font do
     quote bind_quoted: [opts: opts] do
       @font_files Keyword.get(opts, :fonts, [])
       @conversion Keyword.get(opts, :conversion)
-      @fonts Enum.reduce(@font_files, %{}, fn font_file, fonts ->
-        {:ok, new_fonts} = ExBDF.Font.load(font_file, conversion: @conversion, into: fonts)
-        new_fonts
-      end)
+      @fonts Parser.load!(@font_files, conversion: @conversion)
 
       def font_files, do: @font_files
       def conversion, do: @conversion
