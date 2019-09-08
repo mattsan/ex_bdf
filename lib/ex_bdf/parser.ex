@@ -7,7 +7,7 @@ defmodule ExBDF.Parser do
     File.open(filename, &parse(&1, opts))
   end
 
-  def load!(filename, opts \\ [])
+  def load!(filename_or_filenames, opts \\ [])
 
   def load!(filename, opts) when is_binary(filename) and is_list(opts) do
     {:ok, fonts} = File.open(filename, &parse(&1, opts))
@@ -26,38 +26,26 @@ defmodule ExBDF.Parser do
     conversion = Keyword.get(opts, :conversion)
     target = Keyword.get(opts, :into, %{})
 
-    with :ok <- read_header(io),
+    with :ok <- skip_header(io),
          {:ok, font_stream} <- read_all_fonts(io),
          fonts <- stream_to_fonts(font_stream, conversion, target),
          do: fonts
   end
 
-  def stream_to_fonts(stream, conversion, target) when is_map(target) do
-    conv =
-      case conversion do
-        :jis2unicode ->
-          fn %Font{code: code} = font ->
-            {Jis2Unicode.convert(code), font}
-          end
-
-        _ ->
-          fn %Font{code: code} = font ->
-            {code, font}
-          end
-      end
-
-    Enum.into(stream, target, conv)
-  end
-
-  def read_header(io) do
+  defp skip_header(io) do
     case IO.read(io, :line) do
-      :eof -> {:error, :no_fonts}
-      <<"CHARS ", _::binary>> -> :ok
-      _ -> read_header(io)
+      :eof ->
+        {:error, :no_fonts}
+
+      <<"CHARS ", _::binary>> ->
+        :ok
+
+      _ ->
+        skip_header(io)
     end
   end
 
-  def read_all_fonts(io) do
+  defp read_all_fonts(io) do
     font_stream =
       Stream.repeatedly(fn ->
         case read_font(io) do
@@ -70,94 +58,87 @@ defmodule ExBDF.Parser do
     {:ok, font_stream}
   end
 
-  def read_font(io) do
-    with :ok <- read_startchar(io),
-         {:ok, code} <- read_encoding(io),
-         {:ok, width} <- read_dwidth(io),
-         {:ok, bbx} <- read_bbx(io),
-         {:ok, bitmap} <- read_bitmap(io),
-         do: Font.new(code, width, bbx, bitmap)
+  defp stream_to_fonts(stream, conversion, target) when is_map(target) do
+    code_converter =
+      case conversion do
+        :jis2unicode ->
+          fn %Font{code: code} = font -> {Jis2Unicode.convert(code), font} end
+
+        _ ->
+          fn %Font{code: code} = font -> {code, font} end
+      end
+
+    Enum.into(stream, target, code_converter)
   end
 
-  defp read_startchar(io) do
+  defp read_font(io), do: read_font(io, :startchar)
+
+  defp read_font(io, :startchar) do
     case IO.read(io, :line) do
       <<"STARTCHAR ", _::binary>> ->
-        :ok
+        read_font(io, {:reading_declarations, %{}})
 
       error ->
         error
     end
   end
 
-  defp read_encoding(io) do
+  defp read_font(io, {:reading_declarations, data}) when is_map(data) do
     case IO.read(io, :line) do
-      <<"ENCODING ", code::binary>> ->
-        {:ok, code |> String.trim() |> String.to_integer()}
+      <<"ENCODING ", code_s::binary>> ->
+        code =
+          code_s
+          |> String.trim()
+          |> String.to_integer()
 
-      error ->
-        error
-    end
-  end
+        read_font(io, {:reading_declarations, Map.put(data, :code, code)})
 
-  defp read_dwidth(io) do
-    case IO.read(io, :line) do
-      <<"DWIDTH ", width::binary>> ->
-        {:ok, width |> String.split() |> List.first() |> String.to_integer()}
+      <<"DWIDTH ", width_s::binary>> ->
+        width =
+          width_s
+          |> String.split()
+          |> List.first()
+          |> String.to_integer()
 
-      line when is_binary(line) ->
-        read_dwidth(io)
+        read_font(io, {:reading_declarations, Map.put(data, :width, width)})
 
-      error ->
-        error
-    end
-  end
-
-  defp read_bbx(io) do
-    case IO.read(io, :line) do
       <<"BBX ", bounding::binary>> ->
         [width, height, offset_x, offset_y] =
           Regex.run(~r"([\d-]+)\s+([\d-]+)\s+([\d-]+)\s+([\d-]+)", bounding)
           |> Enum.drop(1)
           |> Enum.map(&String.to_integer/1)
 
-        {:ok, %BBX{width: width, height: height, offset_x: offset_x, offset_y: offset_y}}
+        bbx = %BBX{width: width, height: height, offset_x: offset_x, offset_y: offset_y}
+        read_font(io, {:reading_declarations, Map.put(data, :bbx, bbx)})
+
+      "BITMAP\n" ->
+        case read_bitmap(io, []) do
+          {:ok, bitmap} ->
+            Font.new(data.code, data.width, data.bbx, bitmap)
+
+          error ->
+            error
+        end
 
       line when is_binary(line) ->
-        read_bbx(io)
+        read_font(io, {:reading_declarations, data})
 
       error ->
         error
     end
   end
 
-  defp read_bitmap(io) do
+  defp read_bitmap(io, acc) do
     case IO.read(io, :line) do
-      "BITMAP\n" ->
-        bitmap =
-          Stream.repeatedly(fn ->
-            case IO.read(io, :line) do
-              "ENDCHAR\n" ->
-                nil
+      "ENDCHAR\n" ->
+        {:ok, Enum.reverse(acc)}
 
-              :eof ->
-                nil
-
-              {:error, _} ->
-                nil
-
-              hex ->
-                hex
-                |> String.trim()
-                |> String.to_integer(16)
-            end
-          end)
-          |> Stream.take_while(&(&1 != nil))
-          |> Enum.to_list()
-
-        {:ok, bitmap}
-
-      line when is_binary(line) ->
-        read_bitmap(io)
+      hex when is_binary(hex) ->
+        n =
+          hex
+          |> String.trim()
+          |> String.to_integer(16)
+        read_bitmap(io, [n | acc])
 
       error ->
         error
